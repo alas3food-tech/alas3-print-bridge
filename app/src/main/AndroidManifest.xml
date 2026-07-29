@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="true" />
+
+    <application
+        android:allowBackup="true"
+        android:label="Alas3 Impresora"
+        android:icon="@android:drawable/ic_menu_gallery"
+        android:theme="@style/Theme.Alas3PrintBridge">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:label="Alas3 Impresora">
+
+            <!-- Icono en el cajon de apps, para abrir manualmente y conceder el permiso USB una vez -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Esquema que llama la pagina web: alas3print://print?data=BASE64 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="alas3print" android:host="print" />
+            </intent-filter>
+
+        </activity>
+    </application>
+</manifest>

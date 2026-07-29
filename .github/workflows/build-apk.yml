@@ -1,0 +1,34 @@
+name: Compilar APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Instalar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Compilar APK (debug, listo para instalar)
+        run: gradle assembleDebug --no-daemon
+
+      - name: Subir el APK compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alas3Impresora-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
