@@ -5,6 +5,11 @@
         android:name="android.hardware.usb.host"
         android:required="true" />
 
+    <!-- Necesario desde la v2: la app sondea Supabase cada pocos segundos
+         en vez de esperar un enlace alas3print:// local. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:label="Alas3 Impresora"
@@ -17,18 +22,9 @@
             android:launchMode="singleTask"
             android:label="Alas3 Impresora">
 
-            <!-- Icono en el cajon de apps, para abrir manualmente y conceder el permiso USB una vez -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- Esquema que llama la pagina web: alas3print://print?data=BASE64 -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="alas3print" android:host="print" />
             </intent-filter>
 
         </activity>
