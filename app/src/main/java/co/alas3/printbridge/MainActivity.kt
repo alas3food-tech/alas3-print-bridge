@@ -165,9 +165,29 @@ class MainActivity : AppCompatActivity() {
             mostrarEstado("Sesion vencida, reconectando…", false)
         } catch (e: Exception) {
             Log.e(TAG, "Error en el sondeo", e)
-            mostrarEstado("Sin conexion con el servidor, reintentando…", true)
+            mostrarEstado(describirError(e), true)
         } finally {
             programarSiguienteSondeo(POLL_INTERVAL_MS)
+        }
+    }
+
+    /**
+     * Antes esto solo decia "Sin conexion con el servidor" para CUALQUIER
+     * falla, sin decir cual -- imposible de diagnosticar sin ver el
+     * Logcat del dispositivo (que el negocio no tiene como revisar). Ahora
+     * muestra el tipo de error real en pantalla.
+     */
+    private fun describirError(e: Exception): String {
+        val detalle = (e.message ?: "").take(120)
+        return when (e) {
+            is java.net.UnknownHostException ->
+                "No hay internet o no encuentra el servidor (UnknownHostException). Revisa el wifi de la tablet."
+            is javax.net.ssl.SSLHandshakeException ->
+                "Error de seguridad/certificado (SSLHandshakeException) -- probable que Android de esta tablet este muy desactualizado. Detalle: $detalle"
+            is java.net.SocketTimeoutException ->
+                "El servidor tardo demasiado en responder (SocketTimeoutException). Revisa la señal de wifi."
+            else ->
+                "Error: [" + e.javaClass.simpleName + "] " + detalle
         }
     }
 
