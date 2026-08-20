@@ -350,7 +350,7 @@ class PrintPollingService : android.app.Service() {
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
             val text = stream?.bufferedReader()?.use { it.readText() } ?: ""
             if (code !in 200..299) {
-                if (code == 401 || text.contains("No autorizado") || text.contains("expirado")) {
+                if (esSesionInvalida(code, text)) {
                     throw SesionInvalidaException(text)
                 }
                 throw Exception("Error del servidor ($code): $text")
@@ -359,6 +359,30 @@ class PrintPollingService : android.app.Service() {
         } finally {
             conn.disconnect()
         }
+    }
+
+    /**
+     * El backend puede rechazar el token con distinto codigo HTTP (401 o
+     * 403 segun el caso) y distinto texto ("Sesion invalida o expirada",
+     * "No autorizado"...). Antes esto se detectaba comparando el texto
+     * EXACTO ("expirado"), y como el mensaje real dice "expirada" (con
+     * A, como corresponde a "Sesion" en espanol), la app nunca detectaba
+     * que su token estaba vencido: se quedaba reintentando para siempre
+     * con el mismo token invalido cada 5 segundos -- el unico arreglo
+     * era reinstalar la app a mano para borrar el token guardado.
+     * Ahora se revisa primero el codigo de error de Postgres (28000 =
+     * invalid_authorization_specification, el que usa fn_usuario_sesion
+     * en TODAS las RPCs), que no depende del idioma ni de la redaccion
+     * exacta del mensaje, y solo si eso falla se cae a una busqueda de
+     * texto mas amplia como respaldo.
+     */
+    private fun esSesionInvalida(code: Int, text: String): Boolean {
+        if (code != 401 && code != 403) return false
+        val pgErrCode = try { JSONObject(text).optString("code", "") } catch (e: Exception) { "" }
+        if (pgErrCode == "28000") return true
+        val lower = text.lowercase()
+        return lower.contains("no autorizado") ||
+            (lower.contains("sesion") && (lower.contains("invalid") || lower.contains("expir")))
     }
 
     private fun iniciarSesion(): String {
