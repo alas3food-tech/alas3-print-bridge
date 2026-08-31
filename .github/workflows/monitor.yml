@@ -1,0 +1,36 @@
+name: Monitoreo Alas 3 OS
+
+on:
+  schedule:
+    # Cada 10 minutos. GitHub Actions no garantiza el minuto exacto en
+    # horas de mucho trafico, pero nunca deberia atrasarse mucho mas.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Revisar sitio, funciones y cola de impresion
+        id: check
+        working-directory: monitoring
+        run: node check.js
+        env:
+          CALLMEBOT_PHONE: ${{ secrets.CALLMEBOT_PHONE }}
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+
+      - name: Enviar alerta por correo (solo si hay problema)
+        if: always() && steps.check.outputs.hay_problema == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: ${{ steps.check.outputs.asunto }}
+          to: ${{ secrets.ALERT_EMAIL_TO }}
+          from: Alas 3 OS Monitoreo
+          body: file://monitoring/monitor-output.txt

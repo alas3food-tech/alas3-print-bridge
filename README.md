@@ -61,3 +61,11 @@ Si el enlace `alas3print://` no hace nada en absoluto (ni siquiera abre
 la app), en Operaciones sigue apareciendo el aviso con el boton
 **"toca aqui para usar la impresion del navegador"** como respaldo -- no
 se pierde la capacidad de imprimir mientras se resuelve.
+
+## Monitoreo del sistema completo
+
+Este repositorio también aloja el monitoreo automático de todo ALAS 3
+OS (sitio, funciones de servidor y la cola de impresión) — ver
+[`monitoring/README.md`](monitoring/README.md). No tiene relación con
+la app Android en sí; vive aquí porque es el único repositorio con
+GitHub Actions ya configurado.
