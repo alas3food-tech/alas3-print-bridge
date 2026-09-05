@@ -40,30 +40,53 @@ function dentroDeHorarioColombia() {
 
 const problemas = [];
 
+// Espera unos segundos y vuelve a intentar UNA vez antes de rendirse. El
+// primer par de semanas de este monitor mostro varios "no respondio" en
+// paginas que un momento despues respondian perfecto -- cortes de red
+// pasajeros del runner de GitHub Actions al salir hacia internet, no
+// caidas reales del sitio. Sin esto, cada corte pasajero generaba una
+// alerta (WhatsApp + correo) para nada; con esto, solo se avisa si el
+// problema sigue estando ahi unos segundos despues.
+function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function conReintento(fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    await esperar(5000);
+    return await fn(); // si esta segunda vez tambien falla, el error sube y si es un problema real
+  }
+}
+
 async function checkUrl(url) {
   try {
-    const res = await fetch(url, { method: "GET", signal: AbortSignal.timeout(15000) });
+    const res = await conReintento(() =>
+      fetch(url, { method: "GET", signal: AbortSignal.timeout(15000) })
+    );
     if (!res.ok) problemas.push(`${url} respondio HTTP ${res.status}`);
   } catch (e) {
-    problemas.push(`${url} no respondio: ${e.message}`);
+    problemas.push(`${url} no respondio (tras reintentar): ${e.message}`);
   }
 }
 
 async function checkEdgeFunction(name, body) {
   const url = `${SB_URL}/functions/v1/${name}`;
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
-    });
+    const res = await conReintento(() =>
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15000),
+      })
+    );
     const data = await res.json().catch(() => null);
     if (!data || typeof data.ok !== "boolean") {
       problemas.push(`Funcion ${name} respondio algo inesperado (HTTP ${res.status})`);
     }
   } catch (e) {
-    problemas.push(`Funcion ${name} no respondio: ${e.message}`);
+    problemas.push(`Funcion ${name} no respondio (tras reintentar): ${e.message}`);
   }
 }
 
@@ -168,3 +191,4 @@ run().catch((e) => {
   console.error("Error inesperado corriendo el monitoreo:", e);
   process.exitCode = 1;
 });
+
