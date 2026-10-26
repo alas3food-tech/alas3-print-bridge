@@ -93,11 +93,20 @@ async function checkEdgeFunction(name, body) {
 async function checkColaImpresion() {
   if (!dentroDeHorarioColombia()) return; // fuera de horario, no aplica
 
+  // El PIN NO va en el codigo: es el secreto IMPRESORA_PIN del repositorio (Settings -> Secrets -> Actions).
+  // Sin el secreto se salta esta revision: intentar con un PIN equivocado cuenta como intento fallido,
+  // y 5 seguidos bloquean la cuenta de la impresora 15 minutos (la cocina dejaria de imprimir).
+  const pin = (process.env.IMPRESORA_PIN || "").trim();
+  if (!pin) {
+    console.log("IMPRESORA_PIN no configurado -- se omite la revision de la cola de impresion.");
+    return;
+  }
+
   try {
     const loginRes = await fetch(`${SB_URL}/rest/v1/rpc/staff_login`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
-      body: JSON.stringify({ p_codigo_acceso: "impresora", p_pin: "482917" }),
+      body: JSON.stringify({ p_codigo_acceso: "impresora", p_pin: pin }),
       signal: AbortSignal.timeout(15000),
     });
     const loginRows = await loginRes.json();

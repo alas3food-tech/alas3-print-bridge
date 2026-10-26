@@ -36,6 +36,17 @@ de GitHub y agrega:
    - `GMAIL_APP_PASSWORD` → la contraseña de aplicación (no tu contraseña normal)
    - `ALERT_EMAIL_TO` → a qué correo quieres que lleguen las alertas (puede ser el mismo)
 
+### Cola de impresion (PIN de la cuenta impresora)
+
+Para revisar si hay recibos atascados, el monitoreo entra con la cuenta
+*impresora*. Su PIN NO va en el codigo: agrega el secreto
+
+- `IMPRESORA_PIN` → el PIN actual de la cuenta impresora
+
+Cada vez que cambies ese PIN en Operaciones -> Staff, actualiza este
+secreto enseguida (un PIN viejo cuenta como intento fallido, y 5 seguidos
+bloquean la cuenta 15 minutos). Sin este secreto, esa revision se omite.
+
 Sin estos secretos configurados, el monitoreo igual corre y revisa todo
 — simplemente no puede avisarte si encuentra un problema (lo vas a ver
 igual si entras a la pestaña "Actions" de este repositorio).
