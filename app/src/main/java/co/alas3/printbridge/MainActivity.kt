@@ -1,10 +1,13 @@
 package co.alas3.printbridge
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -28,6 +31,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var estadoTxt: TextView
     private lateinit var cerrarBtn: Button
+    private lateinit var pinInp: EditText
+    private lateinit var guardarPinBtn: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,8 +40,33 @@ class MainActivity : AppCompatActivity() {
         estadoTxt = findViewById(R.id.estadoTxt)
         cerrarBtn = findViewById(R.id.cerrarBtn)
         cerrarBtn.setOnClickListener { finish() }
+        pinInp = findViewById(R.id.pinInp)
+        guardarPinBtn = findViewById(R.id.guardarPinBtn)
+        guardarPinBtn.setOnClickListener { guardarPin() }
 
         solicitarPermisoNotificacionesSiHaceFalta()
+        PrintPollingService.start(this)
+    }
+
+    /**
+     * El PIN de la cuenta "impresora" se escribe aqui y queda guardado solo en esta tablet (antes iba
+     * escrito dentro del codigo de la app). Al guardarlo, el servicio vuelve a iniciar sesion con el nuevo.
+     */
+    private fun guardarPin() {
+        val pin = pinInp.text.toString().trim()
+        if (!pin.matches(Regex("^\\d{4,8}$"))) {
+            mostrarEstado("El PIN debe tener de 4 a 8 numeros.", true)
+            return
+        }
+        getSharedPreferences(PrintPollingService.PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putString(PrintPollingService.PREF_PIN, pin)
+            .remove(PrintPollingService.PREF_TOKEN)
+            .apply()
+        PrintPollingService.reconectar = true
+        pinInp.setText("")
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(pinInp.windowToken, 0)
+        mostrarEstado("PIN guardado. Conectando…", false)
         PrintPollingService.start(this)
     }
 

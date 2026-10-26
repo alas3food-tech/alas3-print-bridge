@@ -25,7 +25,38 @@
         android:textColor="#E8890A"
         android:textSize="16sp"
         android:gravity="center"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="28dp" />
+
+    <!-- PIN de la cuenta "impresora": se escribe aqui (no va dentro del codigo de la app).
+         Si se cambia en Operaciones -> Staff, basta con escribir el nuevo aqui. -->
+    <TextView
+        android:id="@+id/pinLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PIN de la cuenta impresora"
+        android:textColor="#C8BAA6"
+        android:textSize="14sp"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/pinInp"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:inputType="numberPassword"
+        android:maxLength="8"
+        android:gravity="center"
+        android:textSize="22sp"
+        android:textColor="#F5ECD8"
+        android:hint="••••••"
+        android:textColorHint="#6E5F4C"
+        android:importantForAutofill="no" />
+
+    <Button
+        android:id="@+id/guardarPinBtn"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:text="Guardar PIN"
+        android:layout_marginTop="8dp" />
 
     <Button
         android:id="@+id/cerrarBtn"

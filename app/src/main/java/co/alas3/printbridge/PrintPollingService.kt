@@ -45,6 +45,9 @@ class PrintPollingService : android.app.Service() {
 
     private class SesionInvalidaException(msg: String) : Exception(msg)
 
+    /** staff_login no devolvio sesion: el PIN guardado ya no sirve (por ejemplo, lo cambiaron en Operaciones). */
+    private class PinIncorrectoException : Exception("PIN incorrecto")
+
     companion object {
         private const val TAG = "Alas3PrintBridge"
         private const val ACTION_USB_PERMISSION = "co.alas3.printbridge.USB_PERMISSION"
@@ -54,11 +57,17 @@ class PrintPollingService : android.app.Service() {
         private const val SB_KEY = "sb_publishable_jcP3bIIssHblHBDts3kWNw_P7U9EZT4"
 
         private const val CODIGO_ACCESO = "impresora"
-        private const val PIN = "482917"
+        // El PIN NO va en el codigo: se escribe en la pantalla de la app y queda guardado solo en esta tablet.
+        // Asi, si se cambia en Operaciones -> Staff, basta con escribir el nuevo (sin volver a compilar la app).
 
         private const val POLL_INTERVAL_MS = 5000L
-        private const val PREFS_NAME = "alas3_print_bridge"
-        private const val PREF_TOKEN = "token"
+        const val PREFS_NAME = "alas3_print_bridge"
+        const val PREF_TOKEN = "token"
+        const val PREF_PIN = "pin"
+
+        /** MainActivity lo prende al guardar un PIN nuevo: el servicio descarta su sesion y vuelve a entrar. */
+        @Volatile
+        var reconectar = false
 
         private const val CHANNEL_ID = "alas3_print_bridge"
         private const val NOTIF_ID = 1
@@ -206,8 +215,18 @@ class PrintPollingService : android.app.Service() {
 
     private fun cicloDeSondeo() {
         try {
+            if (reconectar) {
+                reconectar = false
+                token = null
+            }
             if (token == null) {
-                token = iniciarSesion()
+                // Sin PIN no se intenta entrar: cada intento fallido cuenta, y 5 seguidos bloquean la cuenta 15 minutos.
+                val pin = prefs.getString(PREF_PIN, null)
+                if (pin.isNullOrEmpty()) {
+                    mostrarEstado("Falta el PIN de la impresora: escribelo abajo y toca Guardar PIN.", true)
+                    return
+                }
+                token = iniciarSesion(pin)
                 prefs.edit().putString(PREF_TOKEN, token).apply()
             }
             val trabajos = obtenerTrabajosPendientes(token!!)
@@ -226,6 +245,11 @@ class PrintPollingService : android.app.Service() {
             token = null
             prefs.edit().remove(PREF_TOKEN).apply()
             mostrarEstado("Sesion vencida, reconectando…", false)
+        } catch (e: PinIncorrectoException) {
+            // Se borra el PIN para NO seguir intentando cada 5 segundos (bloquearia la cuenta).
+            token = null
+            prefs.edit().remove(PREF_TOKEN).remove(PREF_PIN).apply()
+            mostrarEstado("El PIN no es correcto. Escribe el PIN de la cuenta impresora y toca Guardar PIN.", true)
         } catch (e: Exception) {
             Log.e(TAG, "Error en el sondeo", e)
             mostrarEstado(describirError(e), true)
@@ -385,10 +409,11 @@ class PrintPollingService : android.app.Service() {
             (lower.contains("sesion") && (lower.contains("invalid") || lower.contains("expir")))
     }
 
-    private fun iniciarSesion(): String {
-        val body = JSONObject().put("p_codigo_acceso", CODIGO_ACCESO).put("p_pin", PIN)
+    private fun iniciarSesion(pin: String): String {
+        val body = JSONObject().put("p_codigo_acceso", CODIGO_ACCESO).put("p_pin", pin)
         val arr = JSONArray(rpc("staff_login", body))
-        if (arr.length() == 0) throw Exception("No se pudo iniciar sesion con la cuenta de la impresora")
+        // Desde la migracion 0050, un PIN equivocado devuelve cero filas (no un error).
+        if (arr.length() == 0) throw PinIncorrectoException()
         return arr.getJSONObject(0).getString("token")
     }
 

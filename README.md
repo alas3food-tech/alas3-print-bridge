@@ -46,6 +46,21 @@ codigo nuevo.
 4. Listo. Desde ahora, cualquier recibo que mande Operaciones va a
    imprimir solo, sin volver a preguntar.
 
+## PIN de la cuenta impresora (desde la version 1.1)
+
+El PIN ya NO va escrito dentro de la app: se escribe en la pantalla de la
+app, en **"PIN de la cuenta impresora"**, y se toca **Guardar PIN**. Queda
+guardado solo en esta tablet.
+
+- Para cambiarlo: en Operaciones -> **Staff**, ponle el PIN nuevo a la
+  cuenta *impresora*, y despues escribe ese mismo PIN en la app.
+- Si la app dice **"El PIN no es correcto"**, deja de intentar sola (para
+  no bloquear la cuenta: 5 intentos fallidos la bloquean 15 minutos).
+  Escribe el PIN correcto y toca Guardar PIN.
+- Si al instalar una version nueva Android dice "No se instalo la app",
+  desinstala primero la anterior (cada compilacion en GitHub firma la app
+  con una llave distinta) y vuelve a escribir el PIN.
+
 ## Si algo falla
 
 La app muestra en pantalla que fue lo que paso (queda abierta solo si
