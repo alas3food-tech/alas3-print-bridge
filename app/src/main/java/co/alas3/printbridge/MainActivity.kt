@@ -54,8 +54,8 @@ class MainActivity : AppCompatActivity() {
      */
     private fun guardarPin() {
         val pin = pinInp.text.toString().trim()
-        if (!pin.matches(Regex("^\\d{4,8}$"))) {
-            mostrarEstado("El PIN debe tener de 4 a 8 numeros.", true)
+        if (!pin.matches(Regex("^\\d{4,6}$"))) {
+            mostrarEstado("El PIN debe tener de 4 a 6 numeros.", true)
             return
         }
         getSharedPreferences(PrintPollingService.PREFS_NAME, Context.MODE_PRIVATE).edit()
